@@ -40,14 +40,19 @@ int main(void){
 	//test=strcmp(meow,t.value);
 	//printf("Test=%d\n",test);
 	if((error!=0)){
-		test=strcmp("UNDERTALE",t.value);
+		//test=strcmp("UNDERTALE",t.value);
+		test=strcmp("Steam",t.value);
 		if((test==0)&&(flag==0)){
 			printf("%s\n",t.value);
 			flag=1;
 		}
+		else if((test!=0)&&(flag==1)){
+			flag=0;
+			printf("Window No Longer in Focus\n");
+		}
 	}
 	else{
-		flag=0;
+		//flag=0;
 	}
 	error=XQueryTree(d,c,&rr,&pr,&w,&nc);
 //	printf("Number of windows=%d\n",nc);
