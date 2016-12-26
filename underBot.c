@@ -31,7 +31,8 @@ int main(void){
 	XTextProperty t;
 	int k=0;
 	int test=0;
-	int flag=0;;
+	int flag=0;
+	XEvent e;
 	while(1){	
 	Window c;
 	XGetInputFocus(d,&c,&k);
@@ -45,10 +46,21 @@ int main(void){
 		if((test==0)&&(flag==0)){
 			printf("%s\n",t.value);
 			flag=1;
+			XSelectInput(d,c,KeyPressMask |KeyReleaseMask);
 		}
 		else if((test!=0)&&(flag==1)){
 			flag=0;
 			printf("Window No Longer in Focus\n");
+		}
+		else if((test==0)&&(flag==1)){
+		//	printf(".");
+		//window active loop;
+			while(XPending(d)){
+			XNextEvent(d,&e);
+			}
+			if(e.type==KeyPress){
+				printf(".");
+			}
 		}
 	}
 	else{
