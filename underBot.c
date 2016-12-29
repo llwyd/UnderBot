@@ -15,20 +15,102 @@ Grinding tool for Undertale's Genocide path
 #include <X11/extensions/XTest.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
+
+
+typedef struct{
+	Display *d; //x11 display
+	Window c; //Current Window
+	int keyflag;//enables/disables loop
+	useconds_t delay;
+	int count;
+}game;
+
+pthread_mutex_t lock;
+
+static void * moveLoop(void *arg){
+	game * gw =(game*)arg;
+	while(1){
+		for(int j=0;j<2;j++){
+		if(gw->keyflag==1){
+			switch(j){
+				case 0:
+					if(!pthread_mutex_lock(&lock)){
+					XLockDisplay(gw->d);
+					XTestFakeKeyEvent(gw->d,113,True,0);
+					XFlush(gw->d);
+					usleep(gw->delay);
+					XTestFakeKeyEvent(gw->d,113,False,0);
+					XFlush(gw->d);
+					XUnlockDisplay(gw->d);
+					pthread_mutex_unlock(&lock);
+					usleep(gw->delay);
+					}
+					break;
+				case 1:
+					if(!pthread_mutex_lock(&lock)){
+					XLockDisplay(gw->d);
+					XTestFakeKeyEvent(gw->d,114,True,0);
+					XFlush(gw->d);
+					usleep(gw->delay);
+					XTestFakeKeyEvent(gw->d,114,False,0);
+					XFlush(gw->d);
+					XUnlockDisplay(gw->d);
+					pthread_mutex_unlock(&lock);
+					usleep(gw->delay);
+					}
+
+				}
+/*
+				if(!pthread_mutex_lock(&lock)){
+				XLockDisplay(gw->d);
+				XTestFakeKeyEvent(gw->d,113,True,0);
+				XFlush(gw->d);
+				usleep(gw->delay);
+				XTestFakeKeyEvent(gw->d,113,False,0);
+				XFlush(gw->d);
+				usleep(gw->delay);
+
+				
+				XTestFakeKeyEvent(gw->d,114,True,0);
+				XFlush(gw->d);
+				usleep(gw->delay);
+				XTestFakeKeyEvent(gw->d,114,False,0);
+				XFlush(gw->d);
+				XUnlockDisplay(gw->d);
+				pthread_mutex_unlock(&lock);
+				usleep(gw->delay);
+				//usleep(gw->delay);
+				}
+				*/
+		}
+	}	
+}
+}
+
 
 int main(void){
 	printf("Undertale Genocide Bot!\n");
 	printf("T.Lloyd 2016\n");
-	Display *d=XOpenDisplay(0);
-
-	Window * w;
-	Window rr;
-	Window pr;
-	int nc;
+	//Display *d=XOpenDisplay(0);
+	XInitThreads();
+	game u;
+	u.d=XOpenDisplay(0);
+	u.keyflag=0;
+	u.delay =10000;
+	u.count=0;
+	useconds_t db=100000;
+	int k=0;
+	XGetInputFocus(u.d,&u.c,&k);
 	int error;
+	
+
+	pthread_t thread;
+	pthread_mutex_init(&lock,NULL);
+	pthread_create(&thread,NULL,moveLoop,&u);
 
 	XTextProperty t;
-	int k=0;
+	//int k=0;
 	int test=0;
 	int flag=0;
 	int keyflag=0;
@@ -36,60 +118,56 @@ int main(void){
 	KeyCode keyc;
 	XEvent e;
 	while(1){	
-		Window c;
-		XGetInputFocus(d,&c,&k);
-		error=XGetWMName(d,c,&t);
-		int keycount=0;
+		//Window c;
+		if(!pthread_mutex_trylock(&lock)){
+			XLockDisplay(u.d);
+			XGetInputFocus(u.d,&u.c,&k);
+			error=XGetWMName(u.d,u.c,&t);
+			XUnlockDisplay(u.d);
+			pthread_mutex_unlock(&lock);
+		}
 		int prevkey=1;
-		useconds_t delay =10000;
+		//useconds_t delay =10000;
 		if((error!=0)){
 			test=strcmp("UNDERTALE",t.value);
 			if((test==0)&&(flag==0)){
 				printf("%s\n",t.value);
 				flag=1;
-				XSelectInput(d,c,KeyPressMask |KeyReleaseMask);
+				XSelectInput(u.d,u.c,KeyPressMask |KeyReleaseMask);
 			}
 			else if((test!=0)&&(flag==1)){
 				flag=0;
-				keyflag=0;
+				u.keyflag=0;
 				printf("Window No Longer in Focus\n");
 			}
 			else if((test==0)&&(flag==1)){
 			//window active loop;
-				if(keyflag==1){
-					keycount=1;
-					XTestFakeKeyEvent(d,113,True,0);
-					XFlush(d);
-					usleep(delay);
-					XTestFakeKeyEvent(d,113,False,0);
-					XFlush(d);
-					usleep(delay);
+				//if(keyflag==1){
+
 					
-					XTestFakeKeyEvent(d,114,True,0);
-					XFlush(d);
-					usleep(delay);
-					XTestFakeKeyEvent(d,114,False,0);
-					XFlush(d);
-					usleep(delay);
-					keycount=0;
-					
+				//}
+				while(XPending(u.d)){
+				if(!pthread_mutex_trylock(&lock)){
+				XLockDisplay(u.d);
+				XNextEvent(u.d,&e);
+				XUnlockDisplay(u.d);
+				pthread_mutex_unlock(&lock);
 				}
-				while(XPending(d)){
-				XNextEvent(d,&e);
 				}
 
 			//	printf("Key=%x,",e.xkey.keycode);
 				//if((e.type==KeyPress)&&(e.xkey.keycode!=ckey)){
 				if((e.type==KeyPress)&&(e.xkey.keycode==74)){
-					if(keyflag==0){
+					if(u.keyflag==0){
 						printf("UnderBot Active!\n");
-						keyflag=1;
+						u.keyflag=1;
 					}
 					else{
 						printf("UnderBot InActive!\n");
-						keyflag=0;
+						u.keyflag=0;
 					}
-					usleep(((100*100)/2)*10*8);
+					//usleep(((100*100)/2)*10*8);
+					usleep(db);
 				}
 			}
 		}
