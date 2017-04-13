@@ -61,28 +61,6 @@ static void * moveLoop(void *arg){
 					}
 
 				}
-/*
-				if(!pthread_mutex_lock(&lock)){
-				XLockDisplay(gw->d);
-				XTestFakeKeyEvent(gw->d,113,True,0);
-				XFlush(gw->d);
-				usleep(gw->delay);
-				XTestFakeKeyEvent(gw->d,113,False,0);
-				XFlush(gw->d);
-				usleep(gw->delay);
-
-				
-				XTestFakeKeyEvent(gw->d,114,True,0);
-				XFlush(gw->d);
-				usleep(gw->delay);
-				XTestFakeKeyEvent(gw->d,114,False,0);
-				XFlush(gw->d);
-				XUnlockDisplay(gw->d);
-				pthread_mutex_unlock(&lock);
-				usleep(gw->delay);
-				//usleep(gw->delay);
-				}
-				*/
 		}
 	}	
 }
@@ -110,7 +88,6 @@ int main(void){
 	pthread_create(&thread,NULL,moveLoop,&u);
 
 	XTextProperty t;
-	//int k=0;
 	int test=0;
 	int flag=0;
 	int keyflag=0;
@@ -141,22 +118,14 @@ int main(void){
 				printf("Window No Longer in Focus\n");
 			}
 			else if((test==0)&&(flag==1)){
-			//window active loop;
-				//if(keyflag==1){
-
-					
-				//}
 				while(XPending(u.d)){
-				if(!pthread_mutex_trylock(&lock)){
-				XLockDisplay(u.d);
-				XNextEvent(u.d,&e);
-				XUnlockDisplay(u.d);
-				pthread_mutex_unlock(&lock);
+					if(!pthread_mutex_trylock(&lock)){
+						XLockDisplay(u.d);
+						XNextEvent(u.d,&e);
+						XUnlockDisplay(u.d);
+						pthread_mutex_unlock(&lock);
+					}
 				}
-				}
-
-			//	printf("Key=%x,",e.xkey.keycode);
-				//if((e.type==KeyPress)&&(e.xkey.keycode!=ckey)){
 				if((e.type==KeyPress)&&(e.xkey.keycode==74)){
 					if(u.keyflag==0){
 						printf("UnderBot Active!\n");
@@ -166,13 +135,11 @@ int main(void){
 						printf("UnderBot InActive!\n");
 						u.keyflag=0;
 					}
-					//usleep(((100*100)/2)*10*8);
 					usleep(db);
 				}
 			}
 		}
 		else{
-			//flag=0;
 		}
 	}
 	return 0;
